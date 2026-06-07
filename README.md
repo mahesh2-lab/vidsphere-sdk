@@ -1,131 +1,105 @@
-# VidSphere SDK
+# vidsphere-sdk
 
-A Node.js client to seamlessly upload videos to YouTube via your VidSphere account using an API key.
+The official Node.js SDK for VidSphere. Securely and reliably upload videos to YouTube via your VidSphere account using an API key.
 
 ## Installation
 
+Install the package via your preferred package manager:
+
 ```bash
-npm install vidsphere
+npm install vidsphere-sdk
 # or
-pnpm add vidsphere
+pnpm add vidsphere-sdk
 # or
-yarn add vidsphere
+yarn add vidsphere-sdk
 ```
 
 ## Quick Start
 
-Set your API key in your environment variables:
+### 1. Initialization
 
-```bash
-export VIDSPHERE_API_KEY="your-api-key"
-```
-
-Use the client in your application:
+Initialize the `VidSphereClient` with your API key. By default, it will attempt to read the `VIDSPHERE_API_KEY` from your environment variables.
 
 ```typescript
-import { VidSphereClient } from 'vidsphere';
+import { VidSphereClient } from 'vidsphere-sdk';
 
+// Automatically picks up VIDSPHERE_API_KEY from process.env
 const client = new VidSphereClient();
 
-async function main() {
+// Or pass it explicitly
+const client = new VidSphereClient({
+  apiKey: 'sk_test_123456789',
+});
+```
+
+### 2. Uploading a Video
+
+Use the `uploads` resource to upload a local video file. You can optionally track the progress of the upload.
+
+```typescript
+async function uploadVideo() {
   try {
-    const upload = await client.uploads.create('./my-video.mp4', {
-      title: 'My Video',
-      description: 'An example video upload',
-      metadata: {
-        campaignId: '12345',
-        source: 'dashboard'
-      },
-      onProgress: (percent) => {
-        console.log(`Upload progress: ${percent}%`);
-      }
+    const uploadId = await client.uploads.upload('./path/to/video.mp4', (progress) => {
+      console.log(`Upload progress: ${progress}%`);
     });
 
-    console.log(`Upload complete! Video ID: ${upload.id}`);
-
-    // Check status
-    const status = await client.uploads.retrieve(upload.id);
-    console.log('Current status:', status.databaseStatus);
+    console.log('Video successfully uploaded! VidSphere ID:', uploadId);
   } catch (error) {
-    console.error('Upload failed:', error);
+    console.error('Upload failed:', error.message);
   }
 }
 
-main();
+uploadVideo();
 ```
 
-## Configuration
+### 3. Checking Upload Status
 
-You can also pass configuration directly to the client rather than using environment variables:
-
-```typescript
-const client = new VidSphereClient({
-  apiKey: 'your-api-key',      // Defaults to process.env.VIDSPHERE_API_KEY
-  baseUrl: 'https://vidsphere.app', // Defaults to process.env.VIDSPHERE_BASE_URL
-  maxRetries: 3                // Defaults to 3
-});
-```
-
-## Features
-
-### Cancel Uploads
-
-You can cancel uploads midway using an `AbortController`:
+Once uploaded, YouTube will process the video. You can check the processing status using the returned `uploadId`.
 
 ```typescript
-const controller = new AbortController();
-
-// Cancel after 5 seconds
-setTimeout(() => controller.abort(), 5000);
-
-try {
-  await client.uploads.create('./large-video.mp4', {
-    signal: controller.signal
-  });
-} catch (error) {
-  if (error.name === 'AbortError') {
-    console.log('Upload was cancelled.');
-  }
+async function checkStatus(uploadId: string) {
+  const status = await client.uploads.getStatus(uploadId);
+  console.log('Current status:', status);
 }
 ```
 
-### Custom Metadata
+## Configuration Options
 
-You can pass custom metadata alongside your uploads to attach to the video object:
+The `VidSphereClient` accepts the following configuration object:
 
-```typescript
-await client.uploads.create('./video.mp4', {
-  metadata: {
-    userId: 'user_xyz',
-    projectId: 'proj_123'
-  }
-});
-```
+| Option | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `apiKey` | `string` | `process.env.VIDSPHERE_API_KEY` | Your VidSphere API Key. |
+| `baseUrl` | `string` | `https://vidsphere.app` | Optionally override the backend API URL. |
+
+## Supported File Types
+
+The SDK validates files before uploading to save bandwidth. Supported formats include:
+- `.mp4`
+- `.mov`
+- `.avi`
+- `.mkv`
+- `.webm`
 
 ## Error Handling
 
-The SDK provides strongly-typed errors to help you handle specific failure cases programmatically:
+The SDK exposes custom error classes to help you handle failures gracefully:
+- `AuthenticationError`: Thrown when an API key is missing or invalid.
+- `ValidationError`: Thrown when configuration, file paths, or mime-types are invalid.
 
 ```typescript
-import { AuthenticationError, ValidationError, UploadError, NetworkError } from 'vidsphere';
+import { AuthenticationError, ValidationError } from 'vidsphere-sdk/errors';
 
 try {
-  await client.uploads.create('./video.mp4');
-} catch (error) {
-  if (error instanceof AuthenticationError) {
-    console.error('Invalid API Key');
-  } else if (error instanceof ValidationError) {
-    console.error('File not found or invalid format');
-  } else if (error instanceof NetworkError) {
-    console.error('Network failure after max retries');
-  } else if (error instanceof UploadError) {
-    console.error('Server rejected the upload');
-  } else {
-    console.error('Unknown error', error);
+  // ...
+} catch (err) {
+  if (err instanceof AuthenticationError) {
+    console.error('Invalid API Key provided');
+  } else if (err instanceof ValidationError) {
+    console.error('Validation failed:', err.message);
   }
 }
 ```
 
-## Requirements
-
-- Node.js >= 18.0.0
+## License
+MIT
