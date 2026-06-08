@@ -20,7 +20,7 @@ export class VidSphereClient {
       );
     }
 
-    if (!baseUrl) {
+    if (!baseUrl) { 
       throw new ValidationError(
         "[VidSphere] Base URL is missing.\n" +
           "Set VIDSPHERE_BASE_URL in your environment, or pass { baseUrl } to the constructor.",
