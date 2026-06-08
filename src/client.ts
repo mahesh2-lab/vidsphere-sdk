@@ -10,7 +10,7 @@ export class VidSphereClient {
     const baseUrl = (
       config.baseUrl ??
       process.env.VIDSPHERE_BASE_URL ??
-      "https://vidsphere.app"
+      "https://you-tube-creator-dashboard.vercel.app"
     ).replace(/\/$/, "");
 
     if (!apiKey) {

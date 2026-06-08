@@ -70,7 +70,6 @@ The `VidSphereClient` accepts the following configuration object:
 | Option | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
 | `apiKey` | `string` | `process.env.VIDSPHERE_API_KEY` | Your VidSphere API Key. |
-| `baseUrl` | `string` | `https://vidsphere.app` | Optionally override the backend API URL. |
 
 ## Supported File Types
 
