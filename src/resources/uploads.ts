@@ -74,8 +74,8 @@ export class UploadsResource {
           throw new UploadError(`Request failed: ${message}`);
         }
         return response;
-      } catch (err: any) {
-        if (err.name === "AbortError") {
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name === "AbortError") {
           throw err;
         }
         if (err instanceof AuthenticationError || err instanceof UploadError) {
@@ -84,8 +84,9 @@ export class UploadsResource {
 
         attempt++;
         if (attempt > this.maxRetries) {
+          const errorMessage = err instanceof Error ? err.message : String(err);
           throw new NetworkError(
-            `Network error after ${this.maxRetries} retries: ${err.message}`,
+            `Network error after ${this.maxRetries} retries: ${errorMessage}`,
           );
         }
         const backoff = Math.min(1000 * 2 ** attempt, 10000);
@@ -157,10 +158,10 @@ export class UploadsResource {
       {
         method: "POST",
         headers,
-        body: fileStream as any,
+        body: fileStream as unknown as BodyInit,
         signal: options.signal,
         duplex: "half",
-      } as any,
+      } as unknown as RequestInit,
     );
 
     const data = (await res.json()) as Partial<UploadResult>;
