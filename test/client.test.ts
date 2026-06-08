@@ -4,7 +4,7 @@ import { AuthenticationError, ValidationError } from '../src/errors';
 
 describe('VidSphereClient', () => {
   it('should initialize with provided config', () => {
-    const client = new VidSphereClient({ apiKey: 'test-key', baseUrl: 'http://test' });
+    const client = new VidSphereClient({ apiKey: 'test-key' });
     expect(client.uploads).toBeDefined();
   });
 
